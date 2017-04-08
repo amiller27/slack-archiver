@@ -185,6 +185,30 @@ class SlackArchiver(object):
             #do message
             timestamp = self.format_ts(history_entry['ts'])
 
+            try:
+                text = history_entry['text']
+            except KeyError:
+                print "Problem with history_entry"
+                print history_entry
+                text = ''
+
+            try:
+                attachments = history_entry['attachments']
+            except KeyError:
+                attachments = []
+
+            attachment_texts = []
+            for attachment in attachments:
+                attachment_text = ' | '.join(attachment[f]
+                                             for f in ['title', 'pretext',
+                                                       'text', 'footer']
+                                             if f in attachment)
+                if not attachment_text and 'fallback' in attachment:
+                    attachment_text = attachment['fallback']
+                if attachment_text:
+                    attachment_texts.append(attachment_text)
+            text = ' ||| '.join(([text] if text else []) + attachment_texts)
+
             if "subtype" in history_entry:
                 subtype = history_entry['subtype']
                 print "subtype: " + subtype
@@ -201,13 +225,13 @@ class SlackArchiver(object):
             channel = self.channels[channel_id]
             channel_name = channel['name']
             try:
-                self.extract_urls(history_entry['text'])
+                self.extract_urls(text)
             except KeyError as e:
                 print "Problem with history_entry"
                 print history_entry
 
             try:
-                parsed_text = self.resolve_usernames(history_entry['text'])
+                parsed_text = self.resolve_usernames(text)
             except KeyError as e:
                 print "Problem with history_entry"
                 print history_entry
@@ -217,7 +241,7 @@ class SlackArchiver(object):
             logentry = timestamp +": <" + username + "> " + parsed_text
         else:
             
-            print "History type: " + history_entry['type'] + " => " + history_entry['text']
+            print "History type: " + history_entry['type'] + " => " + text
 
         return logentry
 
