@@ -220,6 +220,11 @@ class SlackArchiver(object):
                 username = self.get_name_for_id(user_id)
             else:
                 username = "none"
+            if (username == 'none'
+                  and 'subtype' in history_entry
+                  and history_entry['subtype'] == 'bot_message'):
+                username = 'bot'
+            print "Unable to resolve username: ", history_entry
 
             # get the verbose channel name
             channel = self.channels[channel_id]
